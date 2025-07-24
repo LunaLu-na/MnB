@@ -26,16 +26,38 @@ const storage = multer.diskStorage({
     const dirName = typeMapping[req.body.type] || 'media';
     const uploadPath = path.join(uploadsDir, dirName);
     
+    console.log('Upload destination:', {
+      requestType: req.body.type,
+      mappedDir: dirName,
+      fullPath: uploadPath
+    });
+    
+    // Ensure directory exists
     if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
+      try {
+        fs.mkdirSync(uploadPath, { recursive: true });
+        console.log('Created upload directory:', uploadPath);
+      } catch (err) {
+        console.error('Error creating upload directory:', err);
+        return cb(err);
+      }
     }
+    
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    // Generate unique filename
+    // Generate unique filename with timestamp and random suffix
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    const baseName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `${baseName}-${uniqueSuffix}${ext}`;
+    
+    console.log('Generated filename:', {
+      original: file.originalname,
+      generated: filename
+    });
+    
+    cb(null, filename);
   }
 });
 
@@ -76,44 +98,21 @@ const uploadFile = (req, res) => {
       });
     }
 
-    // Generate URL for the uploaded file
-    const typeMapping = {
-      'image': 'image',
-      'video': 'video', 
-      'coverImage': 'image',
-      'media': 'media'
-    };
-    
-    const dirName = typeMapping[req.body.type] || 'media';
-    const fileUrl = `/uploads/${dirName}/${req.file.filename}`;
-    
-    // Copy file to image directory if it was uploaded to media directory
-    // This ensures backward compatibility while transitioning
-    if (dirName === 'image' && req.file.destination.includes('media')) {
-      const sourceFile = req.file.path;
-      const imageDir = path.join(__dirname, '../../uploads/image');
-      const targetFile = path.join(imageDir, req.file.filename);
-      
-      try {
-        if (!fs.existsSync(imageDir)) {
-          fs.mkdirSync(imageDir, { recursive: true });
-        }
-        fs.copyFileSync(sourceFile, targetFile);
-        console.log('File copied to image directory:', targetFile);
-      } catch (copyErr) {
-        console.error('Error copying file to image directory:', copyErr);
-      }
-    }
-    
-    console.log('File uploaded successfully:', {
+    console.log('File upload details:', {
       originalName: req.file.originalname,
       filename: req.file.filename,
       size: req.file.size,
-      url: fileUrl,
-      type: req.body.type,
-      directory: dirName,
-      destination: req.file.destination
+      destination: req.file.destination,
+      path: req.file.path,
+      type: req.body.type
     });
+
+    // Generate URL for the uploaded file based on actual destination
+    const relativePath = path.relative(path.join(__dirname, '../../'), req.file.path);
+    const normalizedPath = relativePath.replace(/\\/g, '/'); // Normalize path separators
+    const fileUrl = `/${normalizedPath}`;
+
+    console.log('Generated file URL:', fileUrl);
 
     res.json({
       message: 'File uploaded successfully',
