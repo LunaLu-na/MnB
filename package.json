@@ -5,6 +5,9 @@
   "main": "index.js",
   "author": "Brian Baider",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
@@ -12,7 +15,7 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "nodemon": "^3.1.10",
-    "vite": "^7.0.5"
+    "vite": "^5.4.10"
   },
   "scripts": {
     "dev": "concurrently 'vite' \"nodemon server.js\"",
