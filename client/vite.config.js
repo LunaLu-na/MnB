@@ -23,7 +23,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
-      input: "./src/main.jsx",
+      input: "./index.html",
     },
   },
 });
