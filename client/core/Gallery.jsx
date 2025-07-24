@@ -48,7 +48,15 @@ export default function Gallery() {
     if (url.startsWith('/uploads/')) {
       // Use environment variable or fallback to current origin for production
       const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
-      return `${baseUrl}${url}`;
+      const fullUrl = `${baseUrl}${url}`;
+      console.log("Building image URL:", {
+        originalUrl: url,
+        baseUrl: baseUrl,
+        fullUrl: fullUrl,
+        isProduction: import.meta.env.PROD,
+        environment: import.meta.env.MODE
+      });
+      return fullUrl;
     }
     return url;
   };
